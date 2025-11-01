@@ -57,7 +57,7 @@
     <div class="doc">
         <h3>Documentation</h3>
         <p><strong>Problem:</strong> {{ review.split("Problem:")[1].split("Solution:")[0] | default("No problem found") }}</p>
-        <p><strong>Solution:</strong> {{ review.split("Solution:")[1] | default("No solution found") }}</p>
+        <p><strong>Solution:</strong> {{ review.split("Solution:")[1] | default("") }}</p>
     </div>
     {% endif %}
 
