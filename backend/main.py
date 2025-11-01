@@ -22,7 +22,6 @@ def generate_review(code_text, file_type="code"):
 CODE:
 {code_text}
 """
-    # Model from local
     response = ollama.chat(
         model="llama3.1:8b",
         messages=[{"role": "user", "content": prompt}]
@@ -39,20 +38,16 @@ def extract_fixed_code(review_text):
 def extract_sections(review_text):
     problem = solution = suggestions = "N/A"
 
-    # Normalize text to ensure the sections exist
     review_text = review_text or ""
     
-    # Extract Problem
     problem_match = re.search(r"Problem:\s*(.*?)\s*(Solution:|$)", review_text, re.DOTALL)
     if problem_match:
         problem = problem_match.group(1).strip()
     
-    # Extract Solution
     solution_match = re.search(r"Solution:\s*(.*?)\s*(Suggestions:|$)", review_text, re.DOTALL)
     if solution_match:
         solution = solution_match.group(1).strip()
     
-    # Extract Suggestions
     suggestions_match = re.search(r"Suggestions:\s*(.*)", review_text, re.DOTALL)
     if suggestions_match:
         suggestions = suggestions_match.group(1).strip()
