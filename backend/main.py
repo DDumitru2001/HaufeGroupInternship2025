@@ -90,7 +90,7 @@ async def review_code(
         problem, solution, suggestions = extract_sections(review)
     except Exception as e:
         review = fixed_code = ""
-        problem = solution = suggestions = ""
+        problem = solution = suggestions = "found"
         return templates.TemplateResponse("index.html", {
             "request": request,
             "code": code_text,
