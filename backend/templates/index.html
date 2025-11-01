@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Code Reviewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        h1, h2 { text-align: center; color: #333; }
+        form { margin-bottom: 30px; text-align: center; }
+        input[type="file"] { margin-bottom: 10px; }
+        textarea { width: 100%; font-family: monospace; font-size: 14px; border-radius: 5px; padding: 10px; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        .box { background-color: white; padding: 20px; border-radius: 8px; flex: 1 1 45%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 500px; overflow: auto; }
+        pre { white-space: pre-wrap; word-wrap: break-word; background-color: #f4f4f4; padding: 10px; border-radius: 5px; font-size: 14px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-top: 10px; border: none; background-color: #007bff; color: white; border-radius: 5px; }
+        button:hover { background-color: #0056b3; }
+        .copy-btn { background-color: #28a745; }
+        .copy-btn:hover { background-color: #218838; }
+        .error { color: red; text-align: center; margin-top: 20px; }
+        .doc { background-color: #eef9f3; border-left: 5px solid #28a745; padding: 20px; margin-top: 40px; }
+        .doc h3 { color: #333; }
+        .doc p { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Code Review & Auto-Fix</h1>
+
+    <form action="/review" method="post" enctype="multipart/form-data">
+        <label for="file">Upload Code File:</label><br>
+        <input type="file" name="file" id="file" accept=".html,.css,.js,.py,.php,.ts"><br>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if code %}
+    <h2>Edit Your Code</h2>
+    <form action="/review" method="post">
+        <textarea name="edited_code" rows="20">{{ code }}</textarea><br>
+        <button type="submit">Review Edited Code</button>
+    </form>
+
+    <div class="container">
+        <div class="box">
+            <h2>AI Review & Explanation</h2>
+            <pre>{{ review }}</pre>
+        </div>
+
+        {% if fixed_code %}
+        <div class="box">
+            <h2>Fixed Code</h2>
+            <pre id="fixed-code">{{ fixed_code }}</pre>
+            <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="doc">
+        <h3>Documentation</h3>
+        <p><strong>Problem:</strong> {{ review.split("Problem:")[1].split("Solution:")[0] | default("No problem found") }}</p>
+        <p><strong>Solution:</strong> {{ review.split("Solution:")[1] | default("No solution found") }}</p>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <script>
+        function copyToClipboard() {
+            const fixedCode = document.querySelector("#fixed-code").innerText; // Se selectează doar codul corectat
+            navigator.clipboard.writeText(fixedCode).then(() => {
+                alert("Code copied to clipboard!");
+            }).catch(err => {
+                alert("Failed to copy code: " + err);
+            });
+        }
+    </script>
+</body>
+</html>
