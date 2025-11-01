@@ -2,11 +2,12 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
-import os, re
-import ollama   
+import re
+import ollama
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
 
 def generate_review(code_text, file_type="code"):
     prompt = f"""
@@ -22,32 +23,36 @@ def generate_review(code_text, file_type="code"):
 CODE:
 {code_text}
 """
-    response = ollama.chat(
-        model="llama3.1:8b",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        response = ollama.chat(
+            model="llama3.1:8b",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.get('message', {}).get('content', '') or ""
+    except Exception as e:
+        return f"Error generating review: {e}"
 
-    return response['message']['content']
-
-    return response['message']['content']
 
 def extract_fixed_code(review_text):
+    if not review_text:
+        return ""
     match = re.search(r"```(.*?)```", review_text, re.DOTALL)
-    return match.group(1).strip() if match else None
+    return match.group(1).strip() if match else ""
+
 
 def extract_sections(review_text):
     problem = solution = suggestions = "N/A"
+    if not review_text:
+        return problem, solution, suggestions
 
-    review_text = review_text or ""
-    
     problem_match = re.search(r"Problem:\s*(.*?)\s*(Solution:|$)", review_text, re.DOTALL)
     if problem_match:
         problem = problem_match.group(1).strip()
-    
+
     solution_match = re.search(r"Solution:\s*(.*?)\s*(Suggestions:|$)", review_text, re.DOTALL)
     if solution_match:
         solution = solution_match.group(1).strip()
-    
+
     suggestions_match = re.search(r"Suggestions:\s*(.*)", review_text, re.DOTALL)
     if suggestions_match:
         suggestions = suggestions_match.group(1).strip()
@@ -59,6 +64,7 @@ def extract_sections(review_text):
 async def read_form(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @app.post("/review", response_class=HTMLResponse)
 async def review_code(
     request: Request,
@@ -66,23 +72,31 @@ async def review_code(
     edited_code: str = Form(None)
 ):
     code_text = ""
-    
     if file:
         contents = await file.read()
         code_text = contents.decode("utf-8")
     elif edited_code:
         code_text = edited_code
-    
+
     if not code_text:
         return templates.TemplateResponse("index.html", {
             "request": request,
             "error": "No code provided!"
         })
-    
-    review = generate_review(code_text, file_type="web")
-    fixed_code = extract_fixed_code(review)
-    problem, solution, suggestions = extract_sections(review)
-    
+
+    try:
+        review = generate_review(code_text, file_type="web")
+        fixed_code = extract_fixed_code(review)
+        problem, solution, suggestions = extract_sections(review)
+    except Exception as e:
+        review = fixed_code = ""
+        problem = solution = suggestions = ""
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "code": code_text,
+            "error": f"Error generating review: {e}"
+        })
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "code": code_text,
@@ -92,6 +106,7 @@ async def review_code(
         "solution": solution,
         "suggestions": suggestions
     })
+
 
 if __name__ == "__main__":
     import uvicorn

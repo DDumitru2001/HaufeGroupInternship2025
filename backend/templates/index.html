@@ -56,8 +56,9 @@
 
     <div class="doc">
         <h3>Documentation</h3>
-        <p><strong>Problem:</strong> {{ review.split("Problem:")[1].split("Solution:")[0] | default("No problem found") }}</p>
-        <p><strong>Solution:</strong> {{ review.split("Solution:")[1] | default("") }}</p>
+        <p><strong>Problem:</strong> {{ problem }}</p>
+        <p><strong>Solution:</strong> {{ solution }}</p>
+        <p><strong>Suggestions:</strong> {{ suggestions }}</p>
     </div>
     {% endif %}
 
@@ -67,7 +68,7 @@
 
     <script>
         function copyToClipboard() {
-            const fixedCode = document.querySelector("#fixed-code").innerText; // Se selectează doar codul corectat
+            const fixedCode = document.querySelector("#fixed-code").innerText;
             navigator.clipboard.writeText(fixedCode).then(() => {
                 alert("Code copied to clipboard!");
             }).catch(err => {
